@@ -1301,77 +1301,72 @@ if tryb == "Uczeń":
                 # PODSUMOWANIE REZERWACJI
                 # ---------------------------------------
 
-                summary_html = f"""
+            st.markdown(
+                f"""
                 <div style="
-                    background: #f0fff4;
+                    background-color: #f0fff4;
+                    border: 1px solid #9ae6b4;
                     border-left: 6px solid #38a169;
                     padding: 18px 22px;
                     border-radius: 10px;
-                    font-family: 'Poppins', sans-serif;
                     margin-top: 15px;
                 ">
-
-                    <h3 style="
-                        margin: 0;
-                        color: #2f855a;
+            
+                    <div style="
                         font-size: 22px;
+                        font-weight: 600;
+                        color: #2f855a;
+                        margin-bottom: 15px;
                     ">
                         ✔ Rezerwacja potwierdzona!
-                    </h3>
-
+                    </div>
+            
                     <div style="
-                        margin-top: 12px;
                         font-size: 16px;
                         color: #2d3748;
+                        line-height: 1.8;
                     ">
-
-                        <p style="margin: 6px 0;">
+            
+                        <div>
                             📅 <strong>Data:</strong>
                             {selected_date.strftime('%d.%m.%Y')}
-                        </p>
-
-                        <p style="margin: 6px 0;">
+                        </div>
+            
+                        <div>
                             ⏰ <strong>Godzina:</strong>
-                            {start_dt.strftime('%H:%M')}
-                            –
-                            {end_dt.strftime('%H:%M')}
-                        </p>
-
-                        <p style="margin: 6px 0;">
+                            {start_dt.strftime('%H:%M')} – {end_dt.strftime('%H:%M')}
+                        </div>
+            
+                        <div>
                             🎒 <strong>Rodzaj zajęć:</strong>
                             {level}
-                        </p>
-
-                        <p style="margin: 6px 0;">
+                        </div>
+            
+                        <div>
                             💸 <strong>Cena:</strong>
                             {total_price:.0f} zł
-                        </p>
-
-                        <p style="margin: 6px 0;">
+                        </div>
+            
+                        <div>
                             🔐 <strong>Status:</strong>
                             Rezerwacja została potwierdzona
-                        </p>
-
+                        </div>
+            
                     </div>
-
+            
                     <div style="
                         margin-top: 15px;
-                        font-size: 15px;
                         color: #276749;
+                        font-size: 15px;
                     ">
                         Do zobaczenia na zajęciach! 😊
                     </div>
-
+            
                 </div>
-                """
-
-
-                st.markdown(
-                    summary_html,
-                    unsafe_allow_html=True
-                )
-
-
+                """,
+                unsafe_allow_html=True
+            )
+            
             except Exception as e:
 
                 st.error(
