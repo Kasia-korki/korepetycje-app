@@ -377,10 +377,7 @@ if tryb == "Uczeń":
 
 
     # =====================================================
-    # WYBRANY DZIEŃ
-    #
-    # NOWOŚĆ:
-    # używamy st.query_params zamiast JavaScript
+    # WYBRANY DZIEN
     # =====================================================
 
     selected_day = st.query_params.get(
@@ -631,7 +628,12 @@ if tryb == "Uczeń":
 
     html += "</table>"
 
-
+    # Usunięcie wcięć, żeby Streamlit nie potraktował HTML jako kodu
+    html = "\n".join(
+        line.lstrip()
+        for line in html.splitlines()
+    )
+    
     st.markdown(
         html,
         unsafe_allow_html=True
