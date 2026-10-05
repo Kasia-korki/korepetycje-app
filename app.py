@@ -459,46 +459,132 @@ if tryb == "Uczeń":
             st.rerun()
 
 
-    # =====================================================
-    # KALENDARZ
-    # =====================================================
+  # =====================================================
+# KALENDARZ
+# =====================================================
 
-    year = st.session_state.calendar_year
+year = st.session_state.calendar_year
+month = st.session_state.calendar_month
 
-    month = st.session_state.calendar_month
+cal = calendar.monthcalendar(year, month)
 
-    cal = calendar.monthcalendar(
-        year,
-        month
-    )
+# Styl kalendarza
+st.markdown("""
+<style>
+
+.calendar-day button {
+    min-height: 55px !important;
+    height: 55px !important;
+    padding: 5px !important;
+    border-radius: 0px !important;
+    border: 1px solid #ccc !important;
+    font-size: 18px !important;
+}
+
+/* Zielone dostępne dni */
+.available-day button {
+    background-color: #5ac252 !important;
+    color: black !important;
+}
+
+/* Zielone po najechaniu */
+.available-day button:hover {
+    background-color: #4caf50 !important;
+    color: white !important;
+}
+
+/* Dzisiejszy dzień */
+.today-day button {
+    background-color: #067806 !important;
+    color: white !important;
+}
+
+/* Wybrany dzień */
+.selected-day button {
+    background-color: #5ac252 !important;
+    color: black !important;
+    border: 3px solid #067806 !important;
+}
+
+/* Niedostępne dni */
+.unavailable-day {
+    min-height: 55px;
+    height: 55px;
+    padding: 5px;
+    border: 1px solid #eee;
+    color: #aaa;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-sizing: border-box;
+}
+
+/* Nagłówki dni tygodnia */
+.weekday {
+    text-align: center;
+    font-weight: 600;
+    color: #555;
+    padding: 5px;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 
-    html = """
-    <table
-        style="
-            border-collapse: collapse;
-            font-size: 18px;
-            width: 100%;
-        "
-    >
-    """
+# Nazwy dni tygodnia
+weekdays = [
+    "Pon",
+    "Wt",
+    "Śr",
+    "Czw",
+    "Pt",
+    "Sob",
+    "Nd"
+]
 
 
-    for week in cal:
+# Nagłówki
+header_cols = st.columns(7)
 
-        html += "<tr>"
+for i, weekday in enumerate(weekdays):
 
-        for day_num in week:
+    with header_cols[i]:
 
-            # Puste pole
+        st.markdown(
+            f"""
+            <div class="weekday">
+                {weekday}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+# =====================================================
+# DNI MIESIĄCA
+# =====================================================
+
+for week in cal:
+
+    cols = st.columns(7)
+
+    for i, day_num in enumerate(week):
+
+        with cols[i]:
+
+            # Puste miejsce
             if day_num == 0:
 
-                html += """
-                <td style='
-                    padding:10px;
-                    border:1px solid transparent;
-                '></td>
-                """
+                st.markdown(
+                    """
+                    <div class="unavailable-day"
+                         style="visibility:hidden;">
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
                 continue
 
@@ -509,136 +595,97 @@ if tryb == "Uczeń":
                 day_num
             ).date()
 
-
-            d_str = d.strftime(
-                "%Y-%m-%d"
-            )
+            d_str = d.strftime("%Y-%m-%d")
 
 
             # =================================================
-            # KOLORY
+            # DZISIAJ
             # =================================================
 
             if d == today:
 
-                color = "#067806"
-
-                text_color = "#ffffff"
-
-                clickable = False
-
-
-            elif d in days_with_windows:
-
-                color = "#5ac252"
-
-                text_color = "#000000"
-
-                clickable = True
-
-
-            else:
-
-                color = "#ffffff"
-
-                text_color = "#aaaaaa"
-
-                clickable = False
-
-
-            # Dni przeszłe i dzisiejszy nie są klikalne
-            if d <= today:
-
-                clickable = False
-
-
-            # =================================================
-            # WYBRANY DZIEŃ
-            # =================================================
-
-            if d_str == selected_day and clickable:
-
-                border = "3px solid #067806"
-
-            else:
-
-                border = "1px solid #ccc"
-
-
-            # =================================================
-            # KLIKALNY DZIEŃ
-            # =================================================
-
-            if clickable:
-
-                # Najważniejsza zmiana:
-                # zwykły link zmienia query parameter.
-                # Streamlit wykona wtedy ponownie aplikację.
-
-                html += f"""
-                <td style="
-                    padding:10px;
-                    background-color:{color};
-                    border:{border};
-                    cursor:pointer;
-                    text-align:center;
-                    color:{text_color};
-                    font-weight:600;
-                ">
-
-                    <a
-                        href="?selected_day={d_str}"
-                        style="
-                            display:block;
-                            width:100%;
-                            height:100%;
-                            color:{text_color};
-                            text-decoration:none;
-                            font-weight:600;
-                        "
-                    >
+                st.markdown(
+                    f"""
+                    <div style="
+                        min-height:55px;
+                        height:55px;
+                        background-color:#067806;
+                        color:white;
+                        border:1px solid #ccc;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        font-size:18px;
+                        box-sizing:border-box;
+                    ">
                         {day_num}
-                    </a>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-                </td>
-                """
+                continue
 
 
             # =================================================
-            # NIEKLIKALNY DZIEŃ
+            # DOSTĘPNY DZIEŃ
+            # =================================================
+
+            if (
+                d in days_with_windows
+                and d > today
+            ):
+
+                is_selected = (
+                    d_str == selected_day
+                )
+
+                if is_selected:
+                    container_class = "selected-day"
+                else:
+                    container_class = "available-day"
+
+
+                st.markdown(
+                    f'<div class="calendar-day {container_class}">',
+                    unsafe_allow_html=True
+                )
+
+
+                clicked = st.button(
+                    str(day_num),
+                    key=f"calendar_day_{d_str}",
+                    use_container_width=True
+                )
+
+
+                st.markdown(
+                    "</div>",
+                    unsafe_allow_html=True
+                )
+
+
+                if clicked:
+
+                    st.query_params["selected_day"] = d_str
+
+                    st.rerun()
+
+
+            # =================================================
+            # DZIEŃ NIEDOSTĘPNY
             # =================================================
 
             else:
 
-                html += f"""
-                <td style="
-                    padding:10px;
-                    background-color:{color};
-                    border:1px solid #eee;
-                    color:{text_color};
-                    text-align:center;
-                ">
-                    {day_num}
-                </td>
-                """
-
-
-        html += "</tr>"
-
-
-    html += "</table>"
-
-    # Usunięcie wcięć, żeby Streamlit nie potraktował HTML jako kodu
-    html = "\n".join(
-        line.lstrip()
-        for line in html.splitlines()
-    )
-    
-    st.markdown(
-        html,
-        unsafe_allow_html=True
-    )
-
+                st.markdown(
+                    f"""
+                    <div class="unavailable-day">
+                        {day_num}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
     # =====================================================
     # WYBRANY DZIEŃ
