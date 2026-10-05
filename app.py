@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from google.oauth2 import service_account
 import json
 import calendar
@@ -24,12 +25,23 @@ def create_event(summary, start_time, end_time):
     return service.events().insert(calendarId=CALENDAR_OKIENKA, body=event).execute()["id"]
 
 def delete_event(event_id):
+    """Usuwa rezerwację z Google Calendar i zwraca True, jeśli usunięcie się udało."""
+    if not isinstance(event_id, str) or not event_id.strip():
+        return False, "Brak ID wydarzenia w occupied.csv."
+
     try:
         get_calendar_service([SCOPES]).events().delete(
-            calendarId=CALENDAR_OKIENKA, eventId=event_id
+            calendarId=CALENDAR_OKIENKA,
+            eventId=event_id.strip(),
         ).execute()
-    except Exception:
-        pass
+        return True, None
+    except HttpError as e:
+        # 404 oznacza, że wydarzenia już nie ma w kalendarzu.
+        if getattr(e, "resp", None) is not None and e.resp.status == 404:
+            return True, None
+        return False, f"Google Calendar zwrócił błąd: {e}"
+    except Exception as e:
+        return False, str(e)
 
 st.set_page_config(page_title="Rezerwacja zajęć")
 col1, col2 = st.columns([3, 1])
@@ -388,11 +400,14 @@ if tryb == "Administrator":
             if st.button("Usuń wybraną rezerwację"):
                 event_id = occupied.loc[index_to_delete, "event_id"]
 
-                if isinstance(event_id, str) and event_id.strip():
-                    delete_event(event_id)
+                deleted, error = delete_event(event_id)
+
+                if not deleted:
+                    st.error(f"Nie usunięto rezerwacji z Google Calendar. {error}")
+                    st.stop()
 
                 occupied = occupied.drop(index_to_delete).reset_index(drop=True)
                 occupied.to_csv("occupied.csv", index=False)
 
-                st.success("Rezerwacja została usunięta (CSV + Google Calendar).")
+                st.success("Rezerwacja została usunięta z Google Calendar i z listy rezerwacji.")
                 st.rerun()
