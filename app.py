@@ -19,6 +19,7 @@ CALENDAR_OKIENKA = "b30c87e78327bea962c617ff8642aa691b374d2444dc26d86bb8c5bfa428
 # =========================================================
 
 def get_calendar_service(scopes):
+
     sa_data = json.loads(
         st.secrets["service_account_json"]
     )
@@ -78,12 +79,13 @@ def delete_event(event_id):
     ])
 
     try:
+
         service.events().delete(
             calendarId=CALENDAR_OKIENKA,
             eventId=event_id
         ).execute()
 
-    except:
+    except Exception:
         pass
 
 
@@ -95,15 +97,20 @@ st.set_page_config(
     page_title="Rezerwacja zajęć"
 )
 
+
 col1, col2 = st.columns([3, 1])
 
+
 with col1:
+
     st.markdown(
         "<h1 style='color:#2f6f3e;'>Rezerwacja zajęć</h1>",
         unsafe_allow_html=True
     )
 
+
 with col2:
+
     st.image(
         "avatar.png",
         width=100
@@ -112,11 +119,6 @@ with col2:
 
 st.markdown("""
 <style>
-
-img.avatar:hover {
-    transform: scale(1.35);
-    box-shadow: 0px 8px 26px rgba(0,150,0,0.55);
-}
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
@@ -137,28 +139,188 @@ h1, h2, h3 {
     font-weight: 600;
 }
 
+
+/* =====================================================
+   ZWYKŁE PRZYCISKI
+   ===================================================== */
+
 div.stButton > button {
+
     background-color: #4caf50;
     color: white;
+
     border-radius: 10px;
+
     padding: 10px 20px;
+
     font-size: 18px;
+
     border: none;
 }
 
+
+div.stButton > button:hover {
+
+    background-color: #3e8e41;
+
+    color: white;
+}
+
+
+/* =====================================================
+   ALERTY
+   ===================================================== */
+
 div[data-testid="stAlert"] {
+
     background-color: #c8f7c5 !important;
+
     color: #2f6f3e !important;
+
     border-left: 5px solid #4caf50 !important;
 }
 
+
 div[data-testid="stAlert"] p {
+
     color: #2f6f3e !important;
+
     font-weight: 600;
 }
 
-div.stButton > button:hover {
-    background-color: #3e8e41;
+
+/* =====================================================
+   DNI KALENDARZA
+   ===================================================== */
+
+.calendar-empty {
+
+    height: 52px;
+
+}
+
+
+.calendar-unavailable {
+
+    height: 52px;
+
+    background-color: #ffffff;
+
+    border: 1px solid #eeeeee;
+
+    color: #aaaaaa;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 18px;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =====================================================
+   PRZYCISKI KALENDARZA
+   ===================================================== */
+
+.calendar-button div.stButton > button {
+
+    height: 52px !important;
+
+    min-height: 52px !important;
+
+    padding: 0 !important;
+
+    border-radius: 0 !important;
+
+    border: 1px solid #cccccc !important;
+
+    background-color: #5ac252 !important;
+
+    color: #000000 !important;
+
+    font-size: 18px !important;
+
+    font-weight: 500 !important;
+
+}
+
+
+.calendar-button div.stButton > button:hover {
+
+    background-color: #4caf50 !important;
+
+    color: white !important;
+
+}
+
+
+/* =====================================================
+   NAGŁÓWKI DNI TYGODNIA
+   ===================================================== */
+
+.calendar-weekday {
+
+    text-align: center;
+
+    font-weight: 600;
+
+    color: #555555;
+
+    padding-bottom: 6px;
+
+    font-size: 14px;
+
+}
+
+
+/* =====================================================
+   DZISIAJ
+   ===================================================== */
+
+.calendar-today {
+
+    height: 52px;
+
+    background-color: #067806;
+
+    color: white;
+
+    border: 1px solid #cccccc;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 18px;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =====================================================
+   WYBRANY DZIEŃ
+   ===================================================== */
+
+.selected-info {
+
+    margin-top: 15px;
+
+    margin-bottom: 15px;
+
+    color: #2f6f3e;
+
+    font-size: 17px;
+
+    font-weight: 600;
+
 }
 
 </style>
@@ -185,18 +347,36 @@ try:
         "occupied.csv"
     )
 
-    occupied["start"] = pd.to_datetime(
-        occupied["start"]
-    )
+    if "date" not in occupied.columns:
+        occupied["date"] = ""
 
-    occupied["end"] = pd.to_datetime(
-        occupied["end"]
-    )
+    occupied["date"] = occupied["date"].astype(str)
+
+    if "start" in occupied.columns:
+        occupied["start"] = pd.to_datetime(
+            occupied["start"],
+            errors="coerce"
+        )
+
+    else:
+        occupied["start"] = pd.NaT
+
+
+    if "end" in occupied.columns:
+        occupied["end"] = pd.to_datetime(
+            occupied["end"],
+            errors="coerce"
+        )
+
+    else:
+        occupied["end"] = pd.NaT
+
 
     if "event_id" not in occupied.columns:
         occupied["event_id"] = ""
 
-except:
+
+except Exception:
 
     occupied = pd.DataFrame(
         columns=[
@@ -223,24 +403,35 @@ def get_windows_from_calendar():
         "https://www.googleapis.com/auth/calendar.readonly"
     ])
 
+
     now = datetime.now(
         timezone.utc
     ).isoformat()
 
+
     events_result = service.events().list(
+
         calendarId=CALENDAR_OKIENKA,
+
         timeMin=now,
-        maxResults=50,
+
+        maxResults=2500,
+
         singleEvents=True,
+
         orderBy="startTime"
+
     ).execute()
+
 
     events = events_result.get(
         "items",
         []
     )
 
+
     windows = []
+
 
     for event in events:
 
@@ -249,23 +440,63 @@ def get_windows_from_calendar():
             ""
         )
 
-        if "Okienko" in summary:
+
+        if "Okienko" not in summary:
+            continue
+
+
+        start_data = event.get(
+            "start",
+            {}
+        )
+
+        end_data = event.get(
+            "end",
+            {}
+        )
+
+
+        start_string = start_data.get(
+            "dateTime"
+        )
+
+        end_string = end_data.get(
+            "dateTime"
+        )
+
+
+        # Pomijamy wydarzenia całodniowe
+        if not start_string or not end_string:
+            continue
+
+
+        try:
 
             start_dt = datetime.fromisoformat(
-                event["start"]["dateTime"]
+                start_string
             ).replace(
                 tzinfo=None
             )
+
 
             end_dt = datetime.fromisoformat(
-                event["end"]["dateTime"]
+                end_string
             ).replace(
                 tzinfo=None
             )
 
+
             windows.append(
-                (start_dt, end_dt)
+                (
+                    start_dt,
+                    end_dt
+                )
             )
+
+        except Exception:
+
+            continue
+
 
     return windows
 
@@ -293,10 +524,8 @@ if len(windows) == 0:
 days = sorted(
     list(
         set(
-            [
-                w[0].strftime("%Y-%m-%d")
-                for w in windows
-            ]
+            w[0].strftime("%Y-%m-%d")
+            for w in windows
         )
     )
 )
@@ -324,19 +553,21 @@ if tryb == "Uczeń":
     )
 
 
-    days_with_windows = sorted([
-        datetime.strptime(
-            d,
-            "%Y-%m-%d"
-        ).date()
+    days_with_windows = sorted(
+        [
+            datetime.strptime(
+                d,
+                "%Y-%m-%d"
+            ).date()
 
-        for d in days
+            for d in days
 
-        if datetime.strptime(
-            d,
-            "%Y-%m-%d"
-        ).date() >= tomorrow
-    ])
+            if datetime.strptime(
+                d,
+                "%Y-%m-%d"
+            ).date() >= tomorrow
+        ]
+    )
 
 
     if not days_with_windows:
@@ -360,7 +591,7 @@ if tryb == "Uczeń":
 
 
     # =====================================================
-    # MIESIĄC KALENDARZA
+    # INICJALIZACJA KALENDARZA
     # =====================================================
 
     if "calendar_month" not in st.session_state:
@@ -368,6 +599,7 @@ if tryb == "Uczeń":
         st.session_state.calendar_month = (
             nearest_day.month
         )
+
 
     if "calendar_year" not in st.session_state:
 
@@ -377,28 +609,26 @@ if tryb == "Uczeń":
 
 
     # =====================================================
-    # WYBRANY DZIEN
+    # WYBRANY DZIEŃ
     # =====================================================
 
-    selected_day = st.query_params.get(
-        "selected_day",
-        nearest_day_str
-    )
+    if "selected_day" not in st.session_state:
+
+        st.session_state.selected_day = (
+            nearest_day_str
+        )
 
 
-    # Sprawdzenie czy wybrany dzień istnieje
-    try:
+    # =====================================================
+    # FUNKCJA WYBORU DNIA
+    # =====================================================
 
-        selected_date = datetime.strptime(
-            selected_day,
-            "%Y-%m-%d"
-        ).date()
+    def select_day(day_string):
 
-    except:
+        st.session_state.selected_day = day_string
 
-        selected_date = nearest_day
 
-        selected_day = nearest_day_str
+    selected_day = st.session_state.selected_day
 
 
     # =====================================================
@@ -412,7 +642,10 @@ if tryb == "Uczeń":
 
     with col_prev:
 
-        if st.button("←"):
+        if st.button(
+            "←",
+            key="previous_month"
+        ):
 
             if st.session_state.calendar_month == 1:
 
@@ -431,7 +664,11 @@ if tryb == "Uczeń":
 
         st.markdown(
             f"""
-            <h3 style='text-align:center;'>
+            <h3 style="
+                text-align:center;
+                margin-top:5px;
+                margin-bottom:15px;
+            ">
                 {calendar.month_name[
                     st.session_state.calendar_month
                 ]}
@@ -444,7 +681,10 @@ if tryb == "Uczeń":
 
     with col_next:
 
-        if st.button("→"):
+        if st.button(
+            "→",
+            key="next_month"
+        ):
 
             if st.session_state.calendar_month == 12:
 
@@ -459,250 +699,213 @@ if tryb == "Uczeń":
             st.rerun()
 
 
-  # =====================================================
-# KALENDARZ
-# =====================================================
+    # =====================================================
+    # KALENDARZ
+    # =====================================================
 
-year = st.session_state.calendar_year
-month = st.session_state.calendar_month
+    year = st.session_state.calendar_year
 
-cal = calendar.monthcalendar(year, month)
-
-# Styl kalendarza
-st.markdown("""
-<style>
-
-.calendar-day button {
-    min-height: 55px !important;
-    height: 55px !important;
-    padding: 5px !important;
-    border-radius: 0px !important;
-    border: 1px solid #ccc !important;
-    font-size: 18px !important;
-}
-
-/* Zielone dostępne dni */
-.available-day button {
-    background-color: #5ac252 !important;
-    color: black !important;
-}
-
-/* Zielone po najechaniu */
-.available-day button:hover {
-    background-color: #4caf50 !important;
-    color: white !important;
-}
-
-/* Dzisiejszy dzień */
-.today-day button {
-    background-color: #067806 !important;
-    color: white !important;
-}
-
-/* Wybrany dzień */
-.selected-day button {
-    background-color: #5ac252 !important;
-    color: black !important;
-    border: 3px solid #067806 !important;
-}
-
-/* Niedostępne dni */
-.unavailable-day {
-    min-height: 55px;
-    height: 55px;
-    padding: 5px;
-    border: 1px solid #eee;
-    color: #aaa;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    box-sizing: border-box;
-}
-
-/* Nagłówki dni tygodnia */
-.weekday {
-    text-align: center;
-    font-weight: 600;
-    color: #555;
-    padding: 5px;
-}
-
-</style>
-""", unsafe_allow_html=True)
+    month = st.session_state.calendar_month
 
 
-# Nazwy dni tygodnia
-weekdays = [
-    "Pon",
-    "Wt",
-    "Śr",
-    "Czw",
-    "Pt",
-    "Sob",
-    "Nd"
-]
+    # Zawsze poniedziałek jako pierwszy dzień tygodnia
+    cal = calendar.Calendar(
+        firstweekday=calendar.MONDAY
+    ).monthdayscalendar(
+        year,
+        month
+    )
 
 
-# Nagłówki
-header_cols = st.columns(7)
+    # =====================================================
+    # NAGŁÓWKI DNI TYGODNIA
+    # =====================================================
 
-for i, weekday in enumerate(weekdays):
+    weekdays = [
+        "Pon",
+        "Wt",
+        "Śr",
+        "Czw",
+        "Pt",
+        "Sob",
+        "Nd"
+    ]
 
-    with header_cols[i]:
 
-        st.markdown(
-            f"""
-            <div class="weekday">
-                {weekday}
-            </div>
-            """,
-            unsafe_allow_html=True
+    header_cols = st.columns(
+        7,
+        gap="small"
+    )
+
+
+    for i, weekday in enumerate(
+        weekdays
+    ):
+
+        with header_cols[i]:
+
+            st.markdown(
+                f"""
+                <div class="calendar-weekday">
+                    {weekday}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+
+    # =====================================================
+    # DNI MIESIĄCA
+    # =====================================================
+
+    for week_index, week in enumerate(cal):
+
+        cols = st.columns(
+            7,
+            gap="small"
         )
 
 
-# =====================================================
-# DNI MIESIĄCA
-# =====================================================
+        for day_index, day_num in enumerate(
+            week
+        ):
 
-for week in cal:
+            with cols[day_index]:
 
-    cols = st.columns(7)
+                # -----------------------------------------
+                # PUSTE POLE
+                # -----------------------------------------
 
-    for i, day_num in enumerate(week):
+                if day_num == 0:
 
-        with cols[i]:
+                    st.markdown(
+                        """
+                        <div class="calendar-empty">
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
-            # Puste miejsce
-            if day_num == 0:
+                    continue
 
-                st.markdown(
-                    """
-                    <div class="unavailable-day"
-                         style="visibility:hidden;">
-                    </div>
-                    """,
-                    unsafe_allow_html=True
+
+                # -----------------------------------------
+                # DATA
+                # -----------------------------------------
+
+                d = datetime(
+                    year,
+                    month,
+                    day_num
+                ).date()
+
+
+                d_str = d.strftime(
+                    "%Y-%m-%d"
                 )
 
-                continue
+
+                # -----------------------------------------
+                # DZISIAJ
+                # -----------------------------------------
+
+                if d == today:
+
+                    st.markdown(
+                        f"""
+                        <div class="calendar-today">
+                            {day_num}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    continue
 
 
-            d = datetime(
-                year,
-                month,
-                day_num
-            ).date()
+                # -----------------------------------------
+                # DOSTĘPNY DZIEŃ
+                # -----------------------------------------
 
-            d_str = d.strftime("%Y-%m-%d")
+                if (
+                    d in days_with_windows
+                    and d > today
+                ):
 
-
-            # =================================================
-            # DZISIAJ
-            # =================================================
-
-            if d == today:
-
-                st.markdown(
-                    f"""
-                    <div style="
-                        min-height:55px;
-                        height:55px;
-                        background-color:#067806;
-                        color:white;
-                        border:1px solid #ccc;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        font-size:18px;
-                        box-sizing:border-box;
-                    ">
-                        {day_num}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                continue
+                    # Osobny kontener dla stylu
+                    st.markdown(
+                        '<div class="calendar-button">',
+                        unsafe_allow_html=True
+                    )
 
 
-            # =================================================
-            # DOSTĘPNY DZIEŃ
-            # =================================================
+                    st.button(
+                        str(day_num),
 
-            if (
-                d in days_with_windows
-                and d > today
-            ):
+                        key=f"calendar_day_{d_str}",
 
-                is_selected = (
-                    d_str == selected_day
-                )
+                        width="stretch",
 
-                if is_selected:
-                    container_class = "selected-day"
+                        on_click=select_day,
+
+                        args=(d_str,)
+                    )
+
+
+                    st.markdown(
+                        '</div>',
+                        unsafe_allow_html=True
+                    )
+
+
+                # -----------------------------------------
+                # NIEDOSTĘPNY DZIEŃ
+                # -----------------------------------------
+
                 else:
-                    container_class = "available-day"
 
+                    st.markdown(
+                        f"""
+                        <div class="calendar-unavailable">
+                            {day_num}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
-                st.markdown(
-                    f'<div class="calendar-day {container_class}">',
-                    unsafe_allow_html=True
-                )
-
-
-                clicked = st.button(
-                    str(day_num),
-                    key=f"calendar_day_{d_str}",
-                    use_container_width=True
-                )
-
-
-                st.markdown(
-                    "</div>",
-                    unsafe_allow_html=True
-                )
-
-
-                if clicked:
-
-                    st.query_params["selected_day"] = d_str
-
-                    st.rerun()
-
-
-            # =================================================
-            # DZIEŃ NIEDOSTĘPNY
-            # =================================================
-
-            else:
-
-                st.markdown(
-                    f"""
-                    <div class="unavailable-day">
-                        {day_num}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
 
     # =====================================================
-    # WYBRANY DZIEŃ
+    # OSTATECZNY WYBRANY DZIEŃ
     # =====================================================
 
-    day = selected_day
+    selected_day = st.session_state.selected_day
 
+
+    try:
+
+        selected_date = datetime.strptime(
+            selected_day,
+            "%Y-%m-%d"
+        ).date()
+
+    except Exception:
+
+        selected_date = nearest_day
+
+        selected_day = nearest_day_str
+
+        st.session_state.selected_day = (
+            nearest_day_str
+        )
+
+
+    # =====================================================
+    # INFORMACJA O WYBRANYM DNIU
+    # =====================================================
 
     st.markdown(
         f"""
-        <div style="
-            margin-top:15px;
-            margin-bottom:15px;
-            color:#2f6f3e;
-            font-size:17px;
-            font-weight:600;
-        ">
+        <div class="selected-info">
             Wybrany dzień:
             {selected_date.strftime("%d.%m.%Y")}
         </div>
@@ -716,9 +919,15 @@ for week in cal:
     # =====================================================
 
     selected_windows = [
+
         w
+
         for w in windows
-        if w[0].strftime("%Y-%m-%d") == day
+
+        if w[0].strftime(
+            "%Y-%m-%d"
+        ) == selected_day
+
     ]
 
 
@@ -742,19 +951,31 @@ for week in cal:
     for w_start, w_end in selected_windows:
 
         fragments = [
-            (w_start, w_end)
+            (
+                w_start,
+                w_end
+            )
         ]
 
 
         for _, row in occupied.iterrows():
 
-            if row["date"] != day:
+            if str(row["date"]) != selected_day:
                 continue
 
 
             occ_start = row["start"]
 
             occ_end = row["end"]
+
+
+            if pd.isna(
+                occ_start
+            ) or pd.isna(
+                occ_end
+            ):
+
+                continue
 
 
             new_fragments = []
@@ -771,7 +992,10 @@ for week in cal:
                 ):
 
                     new_fragments.append(
-                        (f_start, f_end)
+                        (
+                            f_start,
+                            f_end
+                        )
                     )
 
                 else:
@@ -821,14 +1045,20 @@ for week in cal:
 
 
         while (
-            current + timedelta(
+            current
+            +
+            timedelta(
                 minutes=duration
-            ) <= f_end
+            )
+            <= f_end
         ):
 
             times.append(
-                current.strftime("%H:%M")
+                current.strftime(
+                    "%H:%M"
+                )
             )
+
 
             current += timedelta(
                 minutes=15
@@ -836,6 +1066,7 @@ for week in cal:
 
 
     # Usuwanie duplikatów
+
     times = sorted(
         set(times)
     )
@@ -879,9 +1110,13 @@ for week in cal:
 
 
     prices = {
+
         "Podstawówka": 70,
+
         "Podstawa": 80,
+
         "Rozszerzenie": 100
+
     }
 
 
@@ -905,6 +1140,7 @@ for week in cal:
         "Imię ucznia:"
     )
 
+
     topic = st.text_input(
         "Temat zajęć:"
     )
@@ -914,20 +1150,23 @@ for week in cal:
     # REZERWACJA
     # =====================================================
 
-    if st.button("Rezerwuj"):
+    if st.button(
+        "Rezerwuj",
+        key="reserve_button"
+    ):
 
         # -----------------------------------------------
         # DATA START
         # -----------------------------------------------
 
         start_dt = datetime.strptime(
-            f"{day} {start_time}",
+            f"{selected_day} {start_time}",
             "%Y-%m-%d %H:%M"
         )
 
 
         # -----------------------------------------------
-        # DATA KONIEC
+        # DATA KONIEC ZAJĘĆ
         # -----------------------------------------------
 
         end_dt = (
@@ -939,7 +1178,8 @@ for week in cal:
         )
 
 
-        # 15 minut przerwy
+        # 15 minut przerwy po zajęciach
+
         final_end = (
             end_dt
             +
@@ -954,11 +1194,17 @@ for week in cal:
         # -----------------------------------------------
 
         conflict = occupied[
-            (occupied["date"] == day)
+
+            (occupied["date"] == selected_day)
+
             &
+
             (occupied["start"] < final_end)
+
             &
+
             (occupied["end"] > start_dt)
+
         ]
 
 
@@ -968,82 +1214,111 @@ for week in cal:
                 "Ten zakres jest już zajęty!"
             )
 
+
         else:
 
-            # -------------------------------------------
-            # GOOGLE CALENDAR
-            # -------------------------------------------
+            try:
 
-            event_id = create_event(
+                # ---------------------------------------
+                # GOOGLE CALENDAR
+                # ---------------------------------------
 
-                summary=(
-                    f"Korepetycje: "
-                    f"{name} – {topic}"
-                ),
+                event_id = create_event(
 
-                start_time=start_dt.isoformat(),
+                    summary=(
+                        f"Korepetycje: "
+                        f"{name} – {topic}"
+                    ),
 
-                end_time=end_dt.isoformat()
-            )
+                    start_time=start_dt.isoformat(),
 
+                    end_time=end_dt.isoformat()
 
-            # -------------------------------------------
-            # NOWY WIERSZ
-            # -------------------------------------------
-
-            new_row = pd.DataFrame({
-
-                "date": [day],
-
-                "start": [start_dt],
-
-                "end": [final_end],
-
-                "level": [level],
-
-                "duration": [duration],
-
-                "price": [total_price],
-
-                "name": [name],
-
-                "topic": [topic],
-
-                "event_id": [event_id]
-
-            })
+                )
 
 
-            # -------------------------------------------
-            # DODANIE DO REZERWACJI
-            # -------------------------------------------
+                # ---------------------------------------
+                # NOWY WIERSZ
+                # ---------------------------------------
 
-            occupied = pd.concat(
-                [
-                    occupied,
-                    new_row
-                ],
-                ignore_index=True
-            )
+                new_row = pd.DataFrame({
+
+                    "date": [
+                        selected_day
+                    ],
+
+                    "start": [
+                        start_dt
+                    ],
+
+                    "end": [
+                        final_end
+                    ],
+
+                    "level": [
+                        level
+                    ],
+
+                    "duration": [
+                        duration
+                    ],
+
+                    "price": [
+                        total_price
+                    ],
+
+                    "name": [
+                        name
+                    ],
+
+                    "topic": [
+                        topic
+                    ],
+
+                    "event_id": [
+                        event_id
+                    ]
+
+                })
 
 
-            # -------------------------------------------
-            # ZAPIS CSV
-            # -------------------------------------------
+                # ---------------------------------------
+                # DODANIE DO CSV
+                # ---------------------------------------
 
-            occupied.to_csv(
-                "occupied.csv",
-                index=False
-            )
+                occupied = pd.concat(
+
+                    [
+                        occupied,
+                        new_row
+                    ],
+
+                    ignore_index=True
+
+                )
 
 
-            # -------------------------------------------
-            # SUKCES
-            # -------------------------------------------
+                occupied.to_csv(
+                    "occupied.csv",
+                    index=False
+                )
 
-            st.success(
-                "Zarezerwowano!"
-            )
+
+                st.success(
+                    "Zarezerwowano!"
+                )
+
+
+                # Odświeżenie danych po rezerwacji
+
+                st.rerun()
+
+
+            except Exception as e:
+
+                st.error(
+                    f"Nie udało się utworzyć rezerwacji: {e}"
+                )
 
 
 # =========================================================
@@ -1102,10 +1377,15 @@ if tryb == "Administrator":
 
 
             index_to_delete = st.number_input(
+
                 "Podaj numer wiersza do usunięcia:",
+
                 min_value=0,
+
                 max_value=len(occupied) - 1,
+
                 step=1
+
             )
 
 
@@ -1120,12 +1400,16 @@ if tryb == "Administrator":
 
 
                 # -----------------------------------------
-                # USUNIĘCIE Z GOOGLE CALENDAR
+                # GOOGLE CALENDAR
                 # -----------------------------------------
 
                 if (
-                    isinstance(event_id, str)
-                    and event_id.strip() != ""
+                    isinstance(
+                        event_id,
+                        str
+                    )
+                    and
+                    event_id.strip() != ""
                 ):
 
                     delete_event(
@@ -1134,7 +1418,7 @@ if tryb == "Administrator":
 
 
                 # -----------------------------------------
-                # USUNIĘCIE Z CSV
+                # CSV
                 # -----------------------------------------
 
                 occupied = occupied.drop(
