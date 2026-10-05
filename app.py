@@ -1281,65 +1281,60 @@ if tryb == "Uczeń":
 
                 })
 
+try:
+    # ---------------------------------------
+    # DODANIE DO CSV
+    # ---------------------------------------
 
-                # ---------------------------------------
-# DODANIE DO CSV
-# ---------------------------------------
+    occupied = pd.concat(
+        [occupied, new_row],
+        ignore_index=True
+    )
 
-occupied = pd.concat(
-    [occupied, new_row],
-    ignore_index=True
-)
+    occupied.to_csv("occupied.csv", index=False)
 
-occupied.to_csv("occupied.csv", index=False)
+    # --- PODSUMOWANIE REZERWACJI (premium card) ---
+    summary_html = f"""
+    <div style="
+        background: #f0fff4;
+        border-left: 6px solid #38a169;
+        padding: 18px 22px;
+        border-radius: 10px;
+        font-family: 'Poppins', sans-serif;
+        margin-top: 15px;
+    ">
+        <h3 style="margin: 0; color: #2f855a; font-size: 22px;">
+            ✔ Rezerwacja potwierdzona!
+        </h3>
 
-# --- PODSUMOWANIE REZERWACJI (premium card) ---
-summary_html = f"""
-<div style="
-    background: #f0fff4;
-    border-left: 6px solid #38a169;
-    padding: 18px 22px;
-    border-radius: 10px;
-    font-family: 'Poppins', sans-serif;
-    margin-top: 15px;
-">
-    <h3 style="margin: 0; color: #2f855a; font-size: 22px;">
-        ✔ Rezerwacja potwierdzona!
-    </h3>
+        <div style="margin-top: 12px; font-size: 16px; color: #2d3748;">
+            <p style="margin: 6px 0;">
+                📅 <strong>Data:</strong> {day}
+            </p>
+            <p style="margin: 6px 0;">
+                ⏰ <strong>Godzina:</strong> {start_dt.strftime('%H:%M')} – {end_dt.strftime('%H:%M')}
+            </p>
+            <p style="margin: 6px 0;">
+                🎒 <strong>Rodzaj zajęć:</strong> {level}
+            </p>
+            <p style="margin: 6px 0;">
+                💸 <strong>Cena:</strong> {total_price} zł
+            </p>
+            <p style="margin: 6px 0;">
+                🔐 <strong>Status:</strong> Rezerwacja została potwierdzona
+            </p>
+        </div>
 
-    <div style="margin-top: 12px; font-size: 16px; color: #2d3748;">
-        <p style="margin: 6px 0;">
-            📅 <strong>Data:</strong> {day}
-        </p>
-        <p style="margin: 6px 0;">
-            ⏰ <strong>Godzina:</strong> {start_dt.strftime('%H:%M')} – {end_dt.strftime('%H:%M')}
-        </p>
-        <p style="margin: 6px 0;">
-            🎒 <strong>Rodzaj zajęć:</strong> {level}
-        </p>
-        <p style="margin: 6px 0;">
-            💸 <strong>Cena:</strong> {total_price} zł
-        </p>
-        <p style="margin: 6px 0;">
-            🔐 <strong>Status:</strong> Rezerwacja została potwierdzona
-        </p>
+        <div style="margin-top: 15px; font-size: 15px; color: #276749;">
+            Do zobaczenia na zajęciach! 😊
+        </div>
     </div>
+    """
 
-    <div style="margin-top: 15px; font-size: 15px; color: #276749;">
-        Do zobaczenia na zajęciach! 😊
-    </div>
-</div>
-"""
+    st.markdown(summary_html, unsafe_allow_html=True)
 
-st.markdown(summary_html, unsafe_allow_html=True)
-
-
-
-            except Exception as e:
-
-                st.error(
-                    f"Nie udało się utworzyć rezerwacji: {e}"
-                )
+except Exception as e:
+    st.error(f"Nie udało się utworzyć rezerwacji: {e}")
 
 
 # =========================================================
